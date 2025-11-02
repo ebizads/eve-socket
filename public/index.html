@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Socket.IO Test</title>
+</head>
+
+<body>
+    <h1>Socket.IO Tester</h1>
+
+    <button id="pingBtn">Ping Server</button>
+    <button id="broadcastBtn">Broadcast Message</button>
+    <button id="updateLocationBtn">Update Location of s3v6tpkuen</button>
+
+
+    <pre id="log"></pre>
+
+    <!-- Load socket.io-client from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js">
+    </script>
+
+    <script>
+        const log = (msg) => {
+            document.getElementById("log").textContent += msg + "\n";
+        };
+
+        // update this if your socket.io runs somewhere else:
+        const socket = io("http://localhost:5000");
+        const locationNS = io("http://localhost:5000/location", { transports: ["websocket"] });
+        const chatNS = io("http://localhost:5000/chat", { transports: ["websocket"] });
+
+        socket.on("connect", () => {
+            log("Connected! ID: " + socket.id);
+        });
+
+        // listen for welcome event
+        socket.on("welcome", (data) => {
+            log("Welcome event received:");
+            log(JSON.stringify(data));
+        });
+
+        // listen for serverPong
+        socket.on("serverPong", (data) => {
+            log("Server pong received:");
+            log(JSON.stringify(data));
+        });
+
+        // when someone else clicks broadcast
+        socket.on("globalMessage", (msg) => {
+            log("Broadcast message: " + msg);
+        });
+
+        document.getElementById("pingBtn").onclick = () => {
+            log("Sending ping to server...");
+            socket.emit("pingServer", "Hello server!");
+        };
+
+        document.getElementById("broadcastBtn").onclick = () => {
+            const msg = "This is a global broadcast!";
+            log("Broadcasting: " + msg);
+            socket.emit("broadcastMessage", msg);
+        };
+
+        document.getElementById("updateLocationBtn").addEventListener("click", () => {
+            const lat = 14.5995 + Math.random() * 0.01;
+            const lng = 120.9842 + Math.random() * 0.01;
+
+            locationNS.emit("updateLocation", { driver_id: "s3v6tpkuen", lat, lng });
+
+            console.log("📤 Sent:", { "driver_id": "s3v6tpkuen", lat, lng });
+        });
+
+
+        socket.on("disconnect", () => {
+            log("Disconnected from server.");
+        });
+    </script>
+</body>
+
+</html>
