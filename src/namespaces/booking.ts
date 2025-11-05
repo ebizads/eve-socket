@@ -51,30 +51,32 @@ export function registerBookingNamespace(io: Server) {
 }
 
 export function handleDriverStatusUpdate(ns: Namespace, data: any) {
-  const { booking_id, status, driver_id, confirming_driver } = data;
-  if (status === "Accepted") {
-    ns.to(`booking:${booking_id}`).emit("statusChanged", {
-      booking_id: booking_id,
-      status: status,
+  const { name, booking_status, driver_id, confirming_driver } = data;
+
+  if (booking_status === "Accepted") {
+    ns.to(`booking:${name}`).emit("statusChanged", {
+      booking_id: name,
+      status: booking_status,
       driver_id: driver_id,
       confirming_driver: confirming_driver,
       timestamp: new Date().toISOString(),
       message: "Driver has accepted your booking",
     });
     ns.emit("bookingAccepted", {
-      booking_id: booking_id,
+      booking_id: name,
       driver_id: driver_id,
       timestamp: new Date().toISOString(),
     });
+    console.log("DUMAAN NG EMIT")
   } else {
     // Handle other status updates
-    ns.to(`booking:${booking_id}`).emit("statusChanged", {
-      booking_id: booking_id,
-      status: status,
+    ns.to(`booking:${name}`).emit("statusChanged", {
+      booking_id: name,
+      status: booking_status,
       driver_id: driver_id,
       confirming_driver: confirming_driver,
       timestamp: new Date().toISOString(),
-      message: `Booking status updated to: ${status}`,
+      message: `Booking status updated to: ${booking_status}`,
     });
   }
 }
