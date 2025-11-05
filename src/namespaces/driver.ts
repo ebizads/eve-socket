@@ -2,7 +2,7 @@ import type { Namespace, Socket } from "socket.io";
 import { handleDriverStatusUpdate } from "./booking.js";
 import { clients } from "../server.js";
 
-export function registerDriverNamespace(driverNS: Namespace) {
+export function registerDriverNamespace(driverNS: Namespace, bookingNS: Namespace) {
   driverNS.on("connection", (socket: Socket) => {
     console.log(`🚗 Driver connected: ${socket.id}`);
 
@@ -30,10 +30,10 @@ export function registerDriverNamespace(driverNS: Namespace) {
         confirming_driver,
         status: statusUpdate
       });
-      console.log(response.data.booking)
+      // console.log(response.data.booking)
       // Forward status update to relevant booking/passenger
       // driverNS.emit("bookingStatusUpdated", data);
-      handleDriverStatusUpdate(driverNS, data);
+      handleDriverStatusUpdate(bookingNS, response.data.booking);
     });
 
     socket.on("etaUpdate", (data) => {

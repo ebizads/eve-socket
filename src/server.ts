@@ -124,7 +124,7 @@ const io = new Server(httpServer, {
 registerChatNamespace(io.of("/chat"));
 registerLocationNamespace(io.of("/location"));
 registerBookingNamespace(io);
-registerDriverNamespace(io.of("/driver"));
+registerDriverNamespace(io.of("/driver"), io.of("/booking"));
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
