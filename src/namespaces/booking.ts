@@ -1,4 +1,5 @@
 import { Namespace, Server, Socket } from "socket.io";
+import { clients } from "../server.js";
 
 export function registerBookingNamespace(io: Server) {
   const ns = io.of("/booking");
@@ -25,9 +26,16 @@ export function registerBookingNamespace(io: Server) {
     });
 
     // Listen for driver status updates
-    socket.on("driverStatusUpdate", (data: any) => {
-      console.log("Driver status update:", data);
-      handleDriverStatusUpdate(ns, data);
+    socket.on("driverStatusUpdate", async (data: any) => {
+      const { booking_id, statusUpdate } = data;
+      console.log("Driver status update for booking:", booking_id);
+      console.log("Driver status updated to:", statusUpdate);
+
+      const response = await clients.eveApiTest.patch(`/booking/booking/${booking_id}/status`, {
+        status: statusUpdate
+      });
+      console.log(response.data.booking)
+      handleDriverStatusUpdate(ns, response.data.booking);
     });
 
     // ✅ ADD HANDLER FOR WEBHOOK EVENTS VIA SOCKET
@@ -42,7 +50,7 @@ export function registerBookingNamespace(io: Server) {
   });
 }
 
-function handleDriverStatusUpdate(ns: Namespace, data: any) {
+export function handleDriverStatusUpdate(ns: Namespace, data: any) {
   const { booking_id, status, driver_id, confirming_driver } = data;
   if (status === "Accepted") {
     ns.to(`booking:${booking_id}`).emit("statusChanged", {

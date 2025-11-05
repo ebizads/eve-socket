@@ -1,4 +1,6 @@
 import type { Namespace, Socket } from "socket.io";
+import { handleDriverStatusUpdate } from "./booking.js";
+import { clients } from "../server.js";
 
 export function registerDriverNamespace(driverNS: Namespace) {
   driverNS.on("connection", (socket: Socket) => {
@@ -18,10 +20,20 @@ export function registerDriverNamespace(driverNS: Namespace) {
       // Optionally, notify passenger namespace or booking namespace
     });
 
-    socket.on("updateBookingStatus", (data) => {
+    socket.on("updateBookingStatus", async (data) => {
       console.log("Booking status updated by driver:", data);
+      const { booking_id, statusUpdate, confirming_driver } = data;
+      console.log("Driver status update for booking:", booking_id);
+      console.log("Driver status updated to:", statusUpdate);
+
+      const response = await clients.eveApiTest.patch(`/booking/booking/${booking_id}/status`, {
+        confirming_driver,
+        status: statusUpdate
+      });
+      console.log(response.data.booking)
       // Forward status update to relevant booking/passenger
-      driverNS.emit("bookingStatusUpdated", data);
+      // driverNS.emit("bookingStatusUpdated", data);
+      handleDriverStatusUpdate(driverNS, data);
     });
 
     socket.on("etaUpdate", (data) => {

@@ -11,10 +11,17 @@
     <button id="pingBtn">Ping Server</button>
     <button id="broadcastBtn">Broadcast Message</button>
     <button id="updateLocationBtn">Update Location of s3v6tpkuen</button>
-
-
+    
+    <!-- ✅ Added input field -->
+    <input id="bookingIdInput" type="text" placeholder="Enter Booking ID"
+        style="margin-left:10px; padding:5px;" />
+    <input id="confirmingDriverInput" type="text" placeholder="Enter Confirming Driver"
+        style="margin-left:10px; padding:5px;" />
+    <button id="updateBookingBtn">Accept Booking status</button>
+    
+    <!-- LOGGER -->
     <pre id="log"></pre>
-
+    
     <!-- Load socket.io-client from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js">
     </script>
@@ -28,6 +35,8 @@
         const socket = io("http://localhost:5000");
         const locationNS = io("http://localhost:5000/location", { transports: ["websocket"] });
         const chatNS = io("http://localhost:5000/chat", { transports: ["websocket"] });
+        const bookingNS = io("http://localhost:5000/booking", { transports: ["websocket"] });
+        const driverNS = io("http://localhost:5000/driver", { transports: ["websocket"] });
 
         socket.on("connect", () => {
             log("Connected! ID: " + socket.id);
@@ -68,6 +77,24 @@
             locationNS.emit("updateLocation", { driver_id: "s3v6tpkuen", lat, lng });
 
             console.log("📤 Sent:", { "driver_id": "s3v6tpkuen", lat, lng });
+        });
+
+        document.getElementById("updateBookingBtn").addEventListener("click", () => {
+            const bookingId = document.getElementById("bookingIdInput").value.trim();
+            const confirmingDriver = document.getElementById("confirmingDriverInput").value.trim();
+
+            if (!bookingId) {
+                log("⚠️ Please enter a Booking ID first.");
+                return;
+            }
+
+            driverNS.emit("updateBookingStatus", {
+                booking_id: bookingId,
+                confirming_driver: confirmingDriver, 
+                statusUpdate: "Accepted"
+            });
+
+            console.log("📤 Sent:", { "booking_id": bookingId, "statusUpdate": "Accepted"  });
         });
 
 

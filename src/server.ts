@@ -14,6 +14,7 @@ import { registerDriverNamespace } from "./namespaces/driver.js";
 interface Clients {
   frappe: AxiosInstance;
   mapbox: AxiosInstance;
+  eveApiTest: AxiosInstance;
 }
 
 export const clients = {} as Clients;

@@ -18,5 +18,12 @@ export function createClients() {
         access_token: Config.vault.mapbox.token, // 🔥 Automatically appended
       },
     }),
+
+    eveApiTest: axios.create({
+      baseURL: "http://192.168.226.64"
+      // params: {
+      //   access_token: Config.vault.mapbox.token, // 🔥 Automatically appended
+      // },
+    }),
   }
 };
