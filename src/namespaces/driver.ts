@@ -1,6 +1,7 @@
 import type { Namespace, Socket } from "socket.io";
 import { handleDriverStatusUpdate } from "./booking.js";
 import { clients } from "../server.js";
+import { createTripSchema } from "../schemas/tripSchema.js";
 
 export function registerDriverNamespace(driverNS: Namespace, bookingNS: Namespace) {
   driverNS.on("connection", (socket: Socket) => {
@@ -52,6 +53,25 @@ export function registerDriverNamespace(driverNS: Namespace, bookingNS: Namespac
       // Update driver availability status
       driverNS.emit("driverAvailabilityChanged", data);
     });
+
+    socket.on("startTrip", async (data) => {
+      const tripData = createTripSchema.parse(data)
+
+      const startTripResponse = await clients.eveApiTest.post(
+        `/trip/trip-create`,
+        tripData
+      );
+
+      console.log(`🚗💨 Starting Trip # ${startTripResponse.data.trip.id}`)
+
+      // listener for passenger
+      driverNS.emit("tripStarted", data);
+    });
+
+    // socket.on("confirmPickup", (data) => {
+
+    //   bookingNS.emit()
+    // });
 
     socket.on("disconnect", () => {
       console.log(`Driver disconnected: ${socket.id}`);
