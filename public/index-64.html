@@ -8,20 +8,33 @@
 <body>
     <h1>Socket.IO Tester</h1>
 
-    <button id="pingBtn">Ping Server</button>
-    <button id="broadcastBtn">Broadcast Message</button>
-    <button id="updateLocationBtn">Update Location of s3v6tpkuen</button>
-    
+    <div>
+        <button id="pingBtn">Ping Server</button>
+        <button id="broadcastBtn">Broadcast Message</button>
+    </div>
+    <br>
     <!-- ✅ Added input field -->
-    <input id="bookingIdInput" type="text" placeholder="Enter Booking ID"
-        style="margin-left:10px; padding:5px;" />
-    <input id="confirmingDriverInput" type="text" placeholder="Enter Confirming Driver"
-        style="margin-left:10px; padding:5px;" />
-    <button id="updateBookingBtn">Accept Booking status</button>
-    
+    <div>
+        <label>Booking Accept Test:</label><br>
+
+        <input id="bookingIdInput" type="text" placeholder="Enter Booking ID" style="margin-left:10px; padding:5px;" />
+        <input id="confirmingDriverInput" type="text" placeholder="Enter Confirming Driver"
+            style="margin-left:10px; padding:5px;" />
+        <button id="updateBookingBtn">Accept Booking status</button>
+    </div>
+    <br>
+    <div>
+
+        <label>JSON Payload for Start Trip:</label><br>
+        <textarea id="jsonInput" style="width: 400px; height: 150px;">{
+        "driver_id": 123,
+        "lat": 14.5547,
+        "lng": 121.0244
+        }</textarea><br>
+        <button id="startTripBtn">Start Trip</button>
+    </div>
     <!-- LOGGER -->
     <pre id="log"></pre>
-    
 
     <!-- Load socket.io-client from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js">
@@ -71,15 +84,6 @@
             socket.emit("broadcastMessage", msg);
         };
 
-        document.getElementById("updateLocationBtn").addEventListener("click", () => {
-            const lat = 14.5995 + Math.random() * 0.01;
-            const lng = 120.9842 + Math.random() * 0.01;
-
-            locationNS.emit("updateLocation", { driver_id: "s3v6tpkuen", lat, lng });
-
-            console.log("📤 Sent:", { "driver_id": "s3v6tpkuen", lat, lng });
-        });
-
         document.getElementById("updateBookingBtn").addEventListener("click", () => {
             const bookingId = document.getElementById("bookingIdInput").value.trim();
             const confirmingDriver = document.getElementById("confirmingDriverInput").value.trim();
@@ -91,12 +95,24 @@
 
             driverNS.emit("updateBookingStatus", {
                 booking_id: bookingId,
-                confirming_driver: confirmingDriver, 
+                confirming_driver: confirmingDriver,
                 statusUpdate: "Accepted"
             });
 
-            console.log("📤 Sent:", { "boking_id": bookingId, "statusUpdate": "Accepted"  });
+            console.log("📤 Sent:", { "booking_id": bookingId, "statusUpdate": "Accepted" });
         });
+
+        document.getElementById("startTripBtn").addEventListener("click", () => {
+            const input = document.getElementById('jsonInput').value;
+            console.log("aaa");
+            try {
+                const payload = JSON.parse(input);
+                driverNS.emit("startTrip", payload);
+                log("📤 Sent: " + JSON.stringify(payload, null, 2));
+            } catch (err) {
+                log("❌ JSON Parse Error: " + err.message);
+            }
+        })
 
 
         socket.on("disconnect", () => {
