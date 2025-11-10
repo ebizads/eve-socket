@@ -2,8 +2,12 @@ import type { Namespace, Socket } from "socket.io";
 import { handleDriverStatusUpdate } from "./booking.js";
 import { clients } from "../server.js";
 import { createTripSchema } from "../schemas/tripSchema.js";
+// import type { RedisAdapter } from "@socket.io/redis-adapter";
+import { RedisAdapter } from "@socket.io/redis-adapter";
+import { RedisAdapterOptions } from "@socket.io/redis-adapter";
 
 export function registerDriverNamespace(driverNS: Namespace, bookingNS: Namespace) {
+  const bookingAdapter = bookingNS.adapter as any;
   driverNS.on("connection", (socket: Socket) => {
     console.log(`🚗 Driver connected: ${socket.id}`);
 
@@ -25,7 +29,7 @@ export function registerDriverNamespace(driverNS: Namespace, bookingNS: Namespac
       console.log("Booking status updated by driver:", data);
       const { booking_id, statusUpdate, confirming_driver } = data;
       console.log("Driver status update for booking:", booking_id);
-      console.log("Driver status updated to:", statusUpdate);
+
 
       const response = await clients.eveApiTest.patch(`/booking/booking/${booking_id}/status`, {
         confirming_driver,
@@ -34,7 +38,14 @@ export function registerDriverNamespace(driverNS: Namespace, bookingNS: Namespac
       // console.log(response.data.booking)
       // Forward status update to relevant booking/passenger
       // driverNS.emit("bookingStatusUpdated", data);
-      handleDriverStatusUpdate(bookingNS, response.data.booking);
+      // Cross-namespace join
+      try {
+        await (bookingNS.adapter as RedisAdapter).remoteJoin(socket.id, `booking:${booking_id}`);
+      } catch (e) {
+        console.log("❗ error", e)
+        // the socket was not found
+      }
+      console.log("Driver status updated to:", statusUpdate);
     });
 
     socket.on("etaUpdate", (data) => {
@@ -54,6 +65,16 @@ export function registerDriverNamespace(driverNS: Namespace, bookingNS: Namespac
       driverNS.emit("driverAvailabilityChanged", data);
     });
 
+    // pass the booking ID in data
+    socket.on("confirmDriverOnTheWay", (data) => {
+      bookingNS.to(`booking:${data}`).emit("driverOnTheWay", data);
+    });
+
+    // pass the booking ID in data
+    socket.on("confirmPickupArrival", (data) => {
+      bookingNS.to(`booking:${data}`).emit("readToPickup", data);
+    });
+
     socket.on("startTrip", async (data) => {
       const tripData = createTripSchema.parse(data)
 
@@ -61,17 +82,13 @@ export function registerDriverNamespace(driverNS: Namespace, bookingNS: Namespac
         `/trip/trip-create`,
         tripData
       );
-
       console.log(`🚗💨 Starting Trip # ${startTripResponse.data.trip.id}`)
+
+      // socket.join("trip:")
 
       // listener for passenger
       driverNS.emit("tripStarted", data);
     });
-
-    // socket.on("confirmPickup", (data) => {
-
-    //   bookingNS.emit()
-    // });
 
     socket.on("disconnect", () => {
       console.log(`Driver disconnected: ${socket.id}`);

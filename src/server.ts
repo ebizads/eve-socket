@@ -2,6 +2,8 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import dotenv from "dotenv";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { Redis } from "ioredis"; // Redis client
 import { Config } from "./config.js";
 import { loadVaultSecrets } from "./lib/vault.js";
 import type { AxiosInstance } from "axios";
@@ -113,17 +115,34 @@ async function init() {
 
 await init();
 
+// -----------------------------
+// Redis Adapter Setup
+// -----------------------------
+const pubClient = new Redis();
+const subClient = pubClient.duplicate();
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
+  adapter: createAdapter(pubClient, subClient),
   cors: {
     origin: process.env.CORS_ORIGIN,
     methods: ["GET", "POST"],
   },
 });
 
+// Create HTTP + Socket.IO server
+console.log("✅ Redis adapter initialized");
+
+pubClient.on("error", (err) => console.error("Redis pubClient error:", err));
+subClient.on("error", (err) => console.error("Redis subClient error:", err));
+
+// -----------------------------
+// Register Namespaces
+// -----------------------------
+
 registerChatNamespace(io.of("/chat"));
 registerLocationNamespace(io.of("/location"));
-registerBookingNamespace(io);
+registerBookingNamespace(io); // booking namespace uses default io
 registerDriverNamespace(io.of("/driver"), io.of("/booking"));
 
 const PORT = process.env.PORT || 5000;
