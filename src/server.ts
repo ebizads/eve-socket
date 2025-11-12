@@ -131,10 +131,11 @@ httpServer.listen(PORT, () => {
   const addr = httpServer.address();
   const host = typeof addr === "object" && addr ? addr.address : "localhost";
   const port = typeof addr === "object" && addr ? addr.port : PORT;
-
+  console.log("===================================================================")
   console.log(`✅ Socket.IO server running on port ${port}`);
   console.log(`✅ HTTP routes available on port ${port}`);
   console.log(
     `✅ Webhook endpoint: http://${host}:${port}/api/webhook/booking-update`
   );
+  console.log("===================================================================")
 });

@@ -44,13 +44,13 @@ export function registerBookingNamespace(io: Server) {
         status: statusUpdate
       });
       console.log(response.data.booking)
-      handleDriverStatusUpdate(ns, response.data.booking);
+      handleBookingStatusUpdateListeners(ns, response.data.booking);
     });
 
     // ✅ ADD HANDLER FOR WEBHOOK EVENTS VIA SOCKET
     socket.on("webhookBookingUpdate", (data: any) => {
       console.log("Webhook booking update via socket:", data);
-      handleDriverStatusUpdate(ns, data);
+      handleBookingStatusUpdateListeners(ns, data);
     });
 
     socket.on("acceptBooking", (data) => {
@@ -62,19 +62,60 @@ export function registerBookingNamespace(io: Server) {
     });
 
     socket.on("updateBookingStatus", async (data) => {
-      const { booking_id, statusUpdate, confirming_driver } = data;
+      console.log("update mo to 😠")
+      // spread data from app
+      const {
+        booking_id,
+        statusUpdate,
+        confirming_driver,
+        cancellation_reason,
+        cancellation_reason_other } = data;
 
-      const response = await clients.eveApiTest.patch(
-        `/booking/booking/${booking_id}/status`,
-        { confirming_driver, status: statusUpdate }
-      );
-
-      // add driver to the booking room
-      if (statusUpdate == "Accepted" && confirming_driver) {
-        socket.join(`booking:${booking_id}`);
-        console.log(`📲 joined booking:${booking_id} room `)
+      let updatedBookingStatusURL;
+      let dataToPass;
+      switch (statusUpdate) {
+        case 'Accepted':
+          updatedBookingStatusURL = `/booking/booking/${booking_id}/status`
+          dataToPass = { confirming_driver, status: statusUpdate }
+          break;
+        case 'Cancelled':
+          updatedBookingStatusURL = `/booking/booking/${booking_id}/cancel`
+          dataToPass = { cancellation_reason, status: statusUpdate, cancellation_reason_other }
+          break;
+        default:
+          updatedBookingStatusURL = `/booking/booking/${booking_id}/status`
+          dataToPass = { status: statusUpdate };
+          break;
       }
-      handleDriverStatusUpdate(ns, response.data.booking);
+
+      try {
+        const response = await clients.eveApiTest.patch(
+          updatedBookingStatusURL,
+          dataToPass
+        );
+
+        handleBookingStatusUpdateListeners(ns, response.data.booking);
+
+        // Add/remove driver from booking room based on status
+        if (statusUpdate === "Accepted" && confirming_driver) {
+          socket.join(`booking:${booking_id}`);
+          console.log(`📲 Booking accepted by ${confirming_driver}, joined booking:${booking_id} room`);
+        } else if (statusUpdate === "Cancelled") {
+          socket.leave(`booking:${booking_id}`);
+          console.log(`🔙 Leaving booking:${booking_id} room`);
+        }
+
+
+      } catch (error: any) {
+        console.error(`❌ Error updating booking ${booking_id} status to ${statusUpdate}:`, error.response?.data || error.message);
+
+        // Optionally, emit error back to client
+        socket.emit('updateBookingStatusError', {
+          booking_id,
+          status: statusUpdate,
+          message: error.response?.data?.error || error.message
+        });
+      }
     });
 
     socket.on("etaUpdate", (data) => {
@@ -137,33 +178,37 @@ export function registerBookingNamespace(io: Server) {
   });
 }
 
-export function handleDriverStatusUpdate(ns: Namespace, data: any) {
-  const { name, booking_status, driver_id, confirming_driver } = data;
+// function for two way communication when status is updated
+export function handleBookingStatusUpdateListeners(ns: Namespace, data: any) {
+  const { name, booking_status, driver_id, confirming_driver, cancelllation_reason, cancellation_reason_other } = data;
 
-  if (booking_status === "Accepted") {
-    ns.to(`booking:${name}`).emit("statusChanged", {
-      booking_id: name,
-      status: booking_status,
-      driver_id: driver_id,
-      confirming_driver: confirming_driver,
-      timestamp: new Date().toISOString(),
-      message: "Driver has accepted your booking",
-    });
-    ns.emit("bookingAccepted", {
-      booking_id: name,
-      driver_id: driver_id,
-      timestamp: new Date().toISOString(),
-    });
-    console.log("DUMAAN NG EMIT")
-  } else {
-    // Handle other status updates
-    ns.to(`booking:${name}`).emit("statusChanged", {
-      booking_id: name,
-      status: booking_status,
-      driver_id: driver_id,
-      confirming_driver: confirming_driver,
-      timestamp: new Date().toISOString(),
-      message: `Booking status updated to: ${booking_status}`,
-    });
+  switch (booking_status) {
+    // emit Accepted to status updated listeners
+    case "Accepted":
+      ns.to(`booking:${name}`).emit("statusChanged", {
+        booking_id: name,
+        status: booking_status,
+        // driver_id: driver_id,
+        confirming_driver: confirming_driver,
+        timestamp: new Date().toISOString(),
+        message: "Driver has accepted your booking",
+      });
+      break;
+    // emit Cancelled to status update listeners
+    case "Cancelled":
+      ns.to(`booking:${name}`).emit("bookingCancelled", {
+        booking_id: name,
+        status: booking_status,
+        // driver_id: driver_id,
+        confirming_driver: confirming_driver,
+        cancelllation_reason,
+        cancellation_reason_other,
+        timestamp: new Date().toISOString(),
+        message: `Booking status updated to: ${booking_status}`,
+      });
+      console.log("🟥 bookingCancelled")
+      break;
   }
+
+  console.log("🎊 STATUS UPDATED FORWARDING TO LISTENERS")
 }

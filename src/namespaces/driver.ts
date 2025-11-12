@@ -1,5 +1,5 @@
 import type { Namespace, Socket } from "socket.io";
-import { handleDriverStatusUpdate } from "./booking.js";
+import { handleBookingStatusUpdateListeners } from "./booking.js";
 import { clients } from "../server.js";
 import { createTripSchema } from "../schemas/tripSchema.js";
 
@@ -34,7 +34,7 @@ export function registerDriverNamespace(driverNS: Namespace, bookingNS: Namespac
       // console.log(response.data.booking)
       // Forward status update to relevant booking/passenger
       // driverNS.emit("bookingStatusUpdated", data);
-      handleDriverStatusUpdate(bookingNS, response.data.booking);
+      handleBookingStatusUpdateListeners(bookingNS, response.data.booking);
     });
 
     socket.on("etaUpdate", (data) => {
