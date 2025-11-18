@@ -105,6 +105,9 @@ export function registerBookingNamespace(io: Server) {
           console.log(`🔙 Leaving booking:${booking_id} room`);
         }
 
+        // refire newBookingAvailable to refresh bookings nearby driver
+        ns.emit("newBookingAvailable", { id: booking_id });
+
 
       } catch (error: any) {
         console.error(`❌ Error updating booking ${booking_id} status to ${statusUpdate}:`, error.response?.data || error.message);
