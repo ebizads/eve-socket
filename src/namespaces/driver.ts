@@ -68,6 +68,16 @@ export function registerDriverNamespace(driverNS: Namespace, bookingNS: Namespac
       driverNS.emit("tripStarted", data);
     });
 
+    socket.on("driverLocationUpdate", async (data) => {
+      console.log(`Updating driver location `)
+      // listener for passenger
+      driverNS.to(`driver:${data.driverId}`).emit("driverLocationHasBeenUpdated", data);
+    });
+
+    socket.on("joinRoom", ({ driverId }) => {
+      socket.join(`driver:${driverId}`);
+      console.log(`${socket.id} joined room: ${driverId}`);
+    });
     // socket.on("confirmPickup", (data) => {
 
     //   bookingNS.emit()
