@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Socket.IO Test</title>
+</head>
+
+<body>
+    <h1>Socket.IO Tester</h1>
+
+    <div>
+        <button id="pingBtn">Ping Server</button>
+        <button id="broadcastBtn">Broadcast Message</button>
+    </div>
+    <br>
+    <!-- ✅ Added input field -->
+    <div>
+        <label>Booking Accept Test:</label><br>
+
+        <input id="bookingIdInput" type="text" placeholder="Enter Booking ID" style="margin-left:10px; padding:5px;" />
+        <input id="confirmingDriverInput" type="text" placeholder="Enter Confirming Driver"
+            style="margin-left:10px; padding:5px;" />
+        <button id="updateBookingBtn">Accept Booking status</button>
+    </div>
+    <br>
+    <div>
+
+        <label>JSON Payload for Start Trip:</label><br>
+        <textarea id="jsonInput" style="width: 400px; height: 150px;">{
+        "driver_id": 123,
+        "lat": 14.5547,
+        "lng": 121.0244
+        }</textarea><br>
+        <button id="startTripBtn">Start Trip</button>
+    </div>
+    <!-- LOGGER -->
+    <pre id="log"></pre>
+    
+    <!-- Load socket.io-client from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js">
+    </script>
+
+    <script>
+        const log = (msg) => {
+            document.getElementById("log").textContent += msg + "\n";
+        };
+
+        // update this if your socket.io runs somewhere else:
+        const socket = io("http://localhost:5000");
+        const locationNS = io("http://localhost:5000/location", { transports: ["websocket"] });
+        const chatNS = io("http://localhost:5000/chat", { transports: ["websocket"] });
+        const bookingNS = io("http://localhost:5000/booking", { transports: ["websocket"] });
+        const driverNS = io("http://localhost:5000/driver", { transports: ["websocket"] });
+
+        socket.on("connect", () => {
+            log("Connected! ID: " + socket.id);
+        });
+
+        // listen for welcome event
+        socket.on("welcome", (data) => {
+            log("Welcome event received:");
+            log(JSON.stringify(data));
+        });
+
+        // listen for serverPong
+        socket.on("serverPong", (data) => {
+            log("Server pong received:");
+            log(JSON.stringify(data));
+        });
+
+        // when someone else clicks broadcast
+        socket.on("globalMessage", (msg) => {
+            log("Broadcast message: " + msg);
+        });
+
+        document.getElementById("pingBtn").onclick = () => {
+            log("Sending ping to server...");
+            socket.emit("pingServer", "Hello server!");
+        };
+
+        document.getElementById("broadcastBtn").onclick = () => {
+            const msg = "This is a global broadcast!";
+            log("Broadcasting: " + msg);
+            socket.emit("broadcastMessage", msg);
+        };
+
+        document.getElementById("updateBookingBtn").addEventListener("click", () => {
+            const bookingId = document.getElementById("bookingIdInput").value.trim();
+            const confirmingDriver = document.getElementById("confirmingDriverInput").value.trim();
+
+            if (!bookingId) {
+                log("⚠️ Please enter a Booking ID first.");
+                return;
+            }
+
+            driverNS.emit("updateBookingStatus", {
+                booking_id: bookingId,
+                confirming_driver: confirmingDriver,
+                statusUpdate: "Accepted"
+            });
+
+            console.log("📤 Sent:", { "booking_id": bookingId, "statusUpdate": "Accepted" });
+        });
+
+        document.getElementById("startTripBtn").addEventListener("click", () => {
+            const input = document.getElementById('jsonInput').value;
+            console.log("aaa");
+            try {
+                const payload = JSON.parse(input);
+                driverNS.emit("startTrip", payload);
+                log("📤 Sent: " + JSON.stringify(payload, null, 2));
+            } catch (err) {
+                log("❌ JSON Parse Error: " + err.message);
+            }
+        })
+
+
+        socket.on("disconnect", () => {
+            log("Disconnected from server.");
+        });
+    </script>
+</body>
+
+</html>
