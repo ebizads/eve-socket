@@ -1,3 +1,18 @@
+# [1.0.0-dev.2](https://github.com/ebizads/eve-socket/compare/v1.0.0-dev.1...v1.0.0-dev.2) (2025-11-21)
+
+
+### Bug Fixes
+
+* fixed package-lock for clean install ([c60b930](https://github.com/ebizads/eve-socket/commit/c60b9300dbc4a5c9a7ffc26b9f381635df7bc834))
+* fixed package-lock for clean install ([b65b966](https://github.com/ebizads/eve-socket/commit/b65b9662737b1b71c1d1e22eda7d6237ab60d256))
+
+
+### Features
+
+* added startTrip for socket connection ([1cc9e76](https://github.com/ebizads/eve-socket/commit/1cc9e76ecca36070bb656a593f9121774d3dbf74))
+* **driver:** added driver namespace ([85f2dc8](https://github.com/ebizads/eve-socket/commit/85f2dc874fa3a1de89f8867079fb69f1c8f0d202))
+* **driver:** driver status update through socket ([9d1fea9](https://github.com/ebizads/eve-socket/commit/9d1fea99d954f8d3134d227f1691eb876af11d34))
+
 # 1.0.0-dev.1 (2025-11-12)
 
 
