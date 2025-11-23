@@ -164,9 +164,19 @@ export function registerBookingNamespace(io: Server) {
       console.log(`🚗💨 Starting Trip # ${startTripResponse.data.trip.id}`)
 
       socket.join(`trip:${startTripResponse.data.trip.id}`)
-      // listener for passenger
+      // send listener for passenger
       ns.to(`booking:${data.booking_id}`).emit("tripStarted", { tripId: startTripResponse.data.trip.id });
     });
+
+    socket.on("completeTrip", async (data) => {
+      console.log(`🚗✅ Completing Trip # ${data.name}`)
+
+      socket.leave(`trip:${data.name}`)
+
+      // send to listener for passenger
+      ns.to(`trip:${data.name}`).emit("tripCompleted", { data });
+    });
+
 
     // passenger should join trip room
     socket.on("joinTripRoom", (data) => {
