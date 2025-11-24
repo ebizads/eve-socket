@@ -155,17 +155,13 @@ export function registerBookingNamespace(io: Server) {
     });
 
     socket.on("startTrip", async (data) => {
-      const tripData = createTripSchema.parse(data)
+      const tripData = data.trip
 
-      const startTripResponse = await clients.eveApiTest.post(
-        `/trip/trip-create`,
-        tripData
-      );
-      console.log(`🚗💨 Starting Trip # ${startTripResponse.data.trip.id}`)
-
-      socket.join(`trip:${startTripResponse.data.trip.id}`)
-      // send listener for passenger
-      ns.to(`booking:${data.booking_id}`).emit("tripStarted", { tripId: startTripResponse.data.trip.id });
+      console.log(`🚗💨 Starting Trip # ${tripData.id}`)
+      console.log(`This is your trip data: `, tripData)
+      socket.join(`trip:${tripData.id}`)
+      // listener for passenger
+      ns.to(`booking:${data.booking_id}`).emit("tripStarted", { tripId: tripData.id });
     });
 
     socket.on("completeTrip", async (data) => {
