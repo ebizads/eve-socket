@@ -157,11 +157,11 @@ export function registerBookingNamespace(io: Server) {
     socket.on("startTrip", async (data) => {
       const tripData = data.trip
 
-      console.log(`🚗💨 Starting Trip # ${tripData.id}`)
+      console.log(`🚗💨 Starting Trip # ${tripData.name}`)
       console.log(`This is your trip data: `, tripData)
-      socket.join(`trip:${tripData.id}`)
+      socket.join(`trip:${tripData.name}`)
       // listener for passenger
-      ns.to(`booking:${data.booking_id}`).emit("tripStarted", { tripId: tripData.id });
+      ns.to(`booking:${tripData.booking_id}`).emit("tripStarted", { tripId: tripData.name});
     });
 
     socket.on("completeTrip", async (data) => {
