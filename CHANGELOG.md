@@ -1,3 +1,10 @@
+# [1.0.0-dev.3](https://github.com/ebizads/eve-socket/compare/v1.0.0-dev.2...v1.0.0-dev.3) (2025-12-01)
+
+
+### Features
+
+* added trip completion listeners and triggers ([c435e66](https://github.com/ebizads/eve-socket/commit/c435e662d823764a647e2bb7bd55cb9200557e05))
+
 # [1.0.0-dev.2](https://github.com/ebizads/eve-socket/compare/v1.0.0-dev.1...v1.0.0-dev.2) (2025-11-21)
 
 
