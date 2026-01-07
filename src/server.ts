@@ -10,6 +10,7 @@ import { registerChatNamespace } from "./namespaces/chat.js";
 import { registerLocationNamespace } from "./namespaces/location.js";
 import { registerBookingNamespace } from "./namespaces/booking.js";
 import { registerDriverNamespace } from "./namespaces/driver.js";
+import { registerOperatorNamespace } from "./namespaces/operator.js";
 
 interface Clients {
   frappe: AxiosInstance;
@@ -125,6 +126,7 @@ registerChatNamespace(io.of("/chat"));
 registerLocationNamespace(io.of("/location"));
 registerBookingNamespace(io);
 registerDriverNamespace(io.of("/driver"), io.of("/booking"));
+registerOperatorNamespace(io.of("operator"));
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
